@@ -9,3 +9,7 @@ export interface Dataset {
   label: string;
   data: any[];
 }
+
+export interface WorkbookErrors {
+  [key: string]: string
+}

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ChartData, Dataset } from './types'
+import { ChartData, Dataset, WorkbookErrors } from './types'
 import * as XLSX from 'xlsx'
 
 @Injectable({
@@ -45,42 +45,48 @@ export class DataSourceService {
    * Convert the passed file into chart objects that can be graphed
    * @param File
    */
-  public async getChartData(file: File): Promise<ChartData[]> {
+  public async getChartData(file: File): Promise<{ charts: ChartData[], errors: WorkbookErrors }> {
     return new Promise((res, rej) => {
-      let fileData: ChartData[] = [];
+      let chartData: ChartData[] = [];
+      let errors: { [key: string]: string } = {};
 
       let reader = new FileReader();
       reader.onload = () => {
         const workbook = XLSX.read(reader.result, { type: "binary" });
 
-        // Pre-create the RegEx instead of building on each loop
-        const chartTypes = {
-          bar: /^(.*?)_BarChart$/i,
-          line: /^(.*?)_LineChart$/i
-        }
-
         // Validate and transform datasets of each sheet
         for (let [name, sheet] of Object.entries(workbook.Sheets)) {
 
-          // Ensure sheet name matches convention
-          for (let [chartType, sheetRegEx] of Object.entries(chartTypes)) {
-            let found = name.match(sheetRegEx);
-            if (!found) {
-              continue;
-            }
-            // Create human readable title from sheet prefix
-            let title = found[1].split(/(?=[A-Z])/).join(' ');
-            const data = <{ [key: string]: number }[]>XLSX.utils.sheet_to_json(sheet);
-
-            fileData.push({
-              title,
-              labels: data.map(r => String(r[this.xAxisLabel])),
-              datasets: this.rowsToDataSets(data),
-              chartType: <'line' | 'bar'>chartType
-            });
+          let found = name.match(/^(.*?)_(Bar|Line)Chart$/i);
+          if (!found) {
+            errors[name] = 'Sheet name does not end in _LineChart or _BarChart';
+            continue;
           }
+          // Create human readable title from sheet prefix
+          let title = found[1].split(/(?=[A-Z])/).join(' ');
+          let chartType = found[2].toLowerCase();
+
+          const data = <{ [key: string]: number }[]>XLSX.utils.sheet_to_json(sheet);
+
+          if (!data[0][this.xAxisLabel]) {
+            errors[name] = `X axis label data column (${this.xAxisLabel}) does not exist`;
+            continue;
+          }
+
+          if (Object.keys(data[0]).length <= 1) {
+            errors[name] = 'Insufficient data columns exist (expect at least 1 Y column)'
+            continue;
+          }
+
+          chartData.push({
+            title,
+            labels: data.map(r => String(r[this.xAxisLabel])),
+            datasets: this.rowsToDataSets(data),
+            chartType: <'line' | 'bar'>chartType
+          });
+
         }
-        res(fileData);
+        res({ charts: chartData, errors });
       }
       reader.readAsBinaryString(file);
     });

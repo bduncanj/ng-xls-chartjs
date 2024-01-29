@@ -2,18 +2,17 @@
   display: grid;
   column-gap: 14px;
   row-gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 400px));
+  grid-template-columns: repeat(auto-fill, minmax(600px, 600px));
   margin-top: 50px;
   justify-content: space-around;
 }
 
-input[type="text"] {
-  border: solid 1px var(--primary-color);
-  padding: 10px;
-  border-radius: 8px;
-  margin-right: 4px;
-  display: inline-block;
-  width: 30%;
+.errors {
+  color: red;
+}
+
+.errors li {
+  margin-left: 20px;
 }
 
 button {
@@ -28,13 +27,9 @@ button {
   .results {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  input[type="text"] {
-    width: 70%;
-  }
 }
 
-@media (max-width: 499px) {
+@media screen and (max-width: 499px) {
   .results {
     grid-template-columns: 1fr;
   }
