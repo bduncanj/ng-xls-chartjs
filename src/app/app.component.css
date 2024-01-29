@@ -1,0 +1,18 @@
+:host {
+  --content-padding: 10px;
+}
+
+header {
+  display: block;
+  height: 60px;
+  padding: var(--content-padding);
+}
+
+.content {
+  padding: var(--content-padding);
+}
+
+.brand-logo {
+  width: 50px;
+  filter: invert(45%) sepia(27%) saturate(6519%) hue-rotate(166deg) brightness(102%) contrast(101%);
+}
